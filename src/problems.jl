@@ -51,9 +51,9 @@ end
 function test_incremental(samples)
     A = 0.0; Q = 0.0
     for i in eachindex(samples)
-        update_statistics(A, Q, samples[i], i) 
+        A, Q = update_statistics(A, Q, samples[i], i) 
     end
-    return A, sqrt(Qx / (k - 1))
+    return A, sqrt(Q / (length(samples) - 1))
 end
 
 function snr_incremental(f, g)
@@ -66,7 +66,7 @@ function snr_incremental(f, g)
         print(k, "\r")
         k = k + 1
     end
-    println()
+    print("   ", "\r")
     x̂ = Ax / sqrt(Qx / (k - 1))
     ŷ = Ay / sqrt(Qy / (k - 1))
     return max(x̂, ŷ), x̂ >= ŷ

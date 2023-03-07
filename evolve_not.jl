@@ -8,6 +8,7 @@ using StatsPlots
 using GraphRecipes
 using CSV
 using Tables
+using Distributions
 
 function build_inverter_experiment(M, N)
     N = length(Inverter.components(N))
@@ -32,29 +33,22 @@ function evolve_inverter(alg, G)
     return scores
 end
 
-@time bscore = Inverter.benchmark_score(2048)
-@show bscore
-
-alg = build_inverter_experiment(1, 7)
-D = decoder(length(Inverter.components()), 1, 1)
+# @time bscore = Inverter.benchmark_score(2048)
+# @show bscore
+# alg = build_inverter_experiment(1, 7)
 
 function cgp_convergence_iterations(N)
     i = 0
     alg = build_inverter_experiment(1, N)
-    bscore = Inverter.benchmark_score(128)
-    @show bscore
     while true
         i = i + 1
         evolve!(alg, 4)
-        @show i, alg.scores
-        g = alg.decode(alg.population[1, :]) 
+        g = alg.decode(alg.population[1, :])
         if g.ne > 0
-            score = Inverter.score(g, 128)
-            @show score
-            score >= bscore && return i
+            score, swap = alg.select(g, Inverter.benchmark_graph(N))
+            swap && return i
         end
     end
-    return i
 end
 
 function random_graph_convergence_iterations(N)
@@ -74,9 +68,94 @@ end
 
 function average_random_graph_convergence(n, N)
     is = zeros(Int, n)
-    for i in eachindex(is)
+    Threads.@threads for i in eachindex(is)
         @show i
         is[i] = random_graph_convergence_iterations(N)
     end
     return is
+end
+
+function record_averages()
+    Ns = [3, 4, 5, 6]
+    iterations = Matrix{Int}(undef, 64, length(Ns))
+    for i in eachindex(Ns)
+        @show i
+        iterations[:, i] .= average_random_graph_convergence(64, Ns[i])
+    end
+    CSV.write("iterations.csv", Tables.table(iterations), writeheader=false)
+end
+
+function load_averages(fn)
+    CSV.File(fn) |> Tables.matrix
+end
+
+function record_cgp_averages()
+    Ns = [3, 4, 5, 6]
+    iterations = Matrix{Int}(undef, 64, length(Ns))
+    for i in eachindex(Ns)
+        @show Ns[i]
+        Threads.@threads for j in 1:64
+            iterations[j, i] = cgp_convergence_iterations(Ns[i])
+        end
+        @show mean(iterations[:, i])
+    end
+    CSV.write("cgp-iterations.csv", Tables.table(iterations .* 4), writeheader=false)
+end
+
+function timecourse_of_benchmark()
+    inverter = Inverter.benchmark_model()
+    problem = Inverter.benchmark_problem()
+    lprob = change_input_levels(problem, [(@nonamespace inverter.LacI).λ], [10 * log(2) / 90])
+    hprob = change_input_levels(problem, [(@nonamespace inverter.LacI).λ], [100 * log(2) / 90])
+
+    Plots.theme(:dao)
+    plt = plot()
+    plot!(plt, solve(lprob, SSAStepper(), saveat=1), idxs=[8], label="Low Input")
+    plot!(plt, solve(hprob, SSAStepper(), saveat=1), idxs=[8], label="High Input")
+    plot!(
+        plt,
+        xlabel="Time (hours)",
+        ylabel="Abundance of output",
+        legend=:best,
+        size=(350, 275),
+        tickfontsize=8,
+        legendfontsize=8,
+        guidefontsize=8,
+        xticks=([720, 1440, 2160, 2880], ["12", "24", "36", "48"])
+    )
+    return plt
+end
+
+function complement_of_benchmark()
+    inverter = Inverter.benchmark_model()
+    problem = Inverter.benchmark_problem()
+
+    comp = Inverter.benchmark_distribution(1024)
+    Plots.theme(:dao)
+    plt = plot()
+    histogram!(plt, comp)
+    plot!(
+        plt,
+        xlabel="High - Low output",
+        ylabel="Frequency",
+        legend=false,
+        size=(350, 275),
+        tickfontsize=8,
+        legendfontsize=8,
+        guidefontsize=8,
+    )
+    return plt
+end
+
+function convergence_to_benchmark()
+    ifn = "/home/lewis/sauces/julia/GeneticLogicGraph/src/iterations.csv"
+    A = load_averages(ifn)
+    Plots.theme(:dao)
+    x = repeat([3, 4, 5, 6], inner=63)
+    plt = plot()
+    μs = mean(A', dims=2)
+    groupedboxplot!(plt, vcat(x, x), vcat(A[:], A[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random" "Algorithm"])
+    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=2, label=false)
+    plot!(plt, minorgrid=false, minorticks=false, yscale=:log10)
+    return plt
 end

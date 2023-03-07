@@ -6,6 +6,8 @@ using ModelingToolkit
 using Catalyst
 using Random
 using StatsBase
+using SciMLBase
+using JumpProcesses
 using ..ALIFE2023
 
 function SomeOperon(;name)
@@ -13,28 +15,28 @@ function SomeOperon(;name)
     return RegulatedPromoter(1/50, 1, R, 1/10, 1; name=Symbol("p", name))
 end
 
-function components()
+function components(N::Int=7)
     @named YFP = Monomer(1)
     @named pYFP = RegulatedPromoter(0, 0, YFP, 0, 0)
     @named LacI = InputSpecies(1 * log(2) / 90)
     @named pTac = RegulatedPromoter(1/50, 1, LacI, 1/10, 1)
-    @named pSrpR = SomeOperon()
-    @named pPhiF = SomeOperon()
-    @named pAmeR = SomeOperon()
-    @named pQacR = SomeOperon()
-    @named pBetI = SomeOperon()
-    return pTac, pSrpR, pPhiF, pAmeR, pQacR, pBetI, pYFP
+    @named SrpR = SomeOperon()
+    @named PhiF = SomeOperon()
+    @named AmeR = SomeOperon()
+    @named QacR = SomeOperon()
+    @named BetI = SomeOperon()
+    return Tuple(vcat([pTac], [SrpR, PhiF, AmeR, QacR, BetI][1:N-2], [pYFP]))
 end
 
 function complement(problem, model, N)
     input = (@nonamespace model.LacI).λ
     output = (@nonamespace model.YFP).monomer
 
-    problem = change_input_levels(problem, [input], [100 * log(2) / 90])
-    his = sample_from_problem(problem, model, output, N)
-    
     problem = change_input_levels(problem, [input], [10 * log(2) / 90])
-    los = sample_from_problem(problem, model, output, N)
+    his = sample_from_problem(problem, model, output, N).u
+    
+    problem = change_input_levels(problem, [input], [8 * log(2) / 90])
+    los = sample_from_problem(problem, model, output, N).u
     
     return his .- los
 end
@@ -62,25 +64,40 @@ function difference_sampler(problem, inputs, levels, output)
     end
 end
 
+function benchmark_graph(N::Int=7)
+    N = length(components(N))
+    G = SimpleDiGraph(N)
+    add_edge!(G, 1, 2)
+    add_edge!(G, 2, N)
+    return G
+end
+
+benchmark_model() = Circuit(benchmark_graph(), components(); name=:x)
+benchmark_problem() = problem_from_model(benchmark_model())
+benchmark_distribution(N) = complement(benchmark_problem(), benchmark_model(), N)
+function benchmark_score(N)
+    distribution = benchmark_distribution(N)
+    return mean(distribution) / std(distribution)
+end
+
 function selector()
     let systems=components()
         function (G::T, H::T) where {T<:DiGraph}
             G.ne == 0 && return H
             H.ne == 0 && return G
             
-            x = model_from_graph(G, systems)
-            y = model_from_graph(H, systems)
+            x = Circuit(G, systems; name=:x)
+            y = Circuit(H, systems; name=:x)
             input  = (@nonamespace x.LacI).λ
             output = (@nonamespace x.YFP).monomer
             
             x = problem_from_model(x)
             y = problem_from_model(y)
 
-            f = difference_sampler(x, [input], [[100], [10]], output)
-            g = difference_sampler(y, [input], [[100], [10]], output)
+            f = difference_sampler(x, [input], [[10], [8]], output)
+            g = difference_sampler(y, [input], [[10], [8]], output)
 
-            snr, xbigger = snr_incremental(f, g)
-            return xbigger
+            return snr_incremental(f, g)
         end
     end
 end

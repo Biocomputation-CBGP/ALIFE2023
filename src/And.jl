@@ -5,7 +5,10 @@ using Graphs
 using ModelingToolkit
 using Catalyst
 using Random
+using SciMLBase
+using JumpProcesses
 using StatsBase
+using StatsPlots
 using ..ALIFE2023
 
 function SomeOperon(;name)
@@ -27,7 +30,7 @@ function components()
     @named pBetI = SomeOperon()
     @named pLmra = SomeOperon()
     @named pAmtR = SomeOperon()
-    return pTac, pTet, pSrpR, pPhiF, pAmeR, pQacR, pBetI, pLmra, pAmtR, pYFP
+    return pTac, pTet, pSrpR, pPhiF, pAmeR, pQacR, pBetI, pLmra, pYFP
 end
 
 function benchmark_graph()
@@ -78,7 +81,7 @@ function complement(problem, model, N)
 end
 
 function score(G::DiGraph, N::Int=256)
-    model = JumpCircuit(G, components(); name=:x)
+    model = Circuit(G, components(); name=:x)
     output = (@nonamespace model.YFP).monomer
     problem = problem_from_model(model)
     distribution = complement(problem, model, N)
