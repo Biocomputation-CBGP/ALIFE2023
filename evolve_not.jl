@@ -163,5 +163,6 @@ function convergence_to_benchmark()
 end
 
 function runner(N)
-    
+    record_averages(N)
+    record_cgp_averages(N)
 end
