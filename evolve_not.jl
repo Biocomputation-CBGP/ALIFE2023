@@ -75,13 +75,14 @@ function average_random_graph_convergence(n, N)
     return is
 end
 
-function record_averages()
-    Ns = [3, 4, 5, 6]
+function record_averages(N)
+    Ns = collect(3:N)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
         @show i
         iterations[:, i] .= average_random_graph_convergence(64, Ns[i])
     end
+    print(iterations)
     CSV.write("iterations.csv", Tables.table(iterations), writeheader=false)
 end
 
@@ -89,8 +90,8 @@ function load_averages(fn)
     CSV.File(fn) |> Tables.matrix
 end
 
-function record_cgp_averages()
-    Ns = [3, 4, 5, 6]
+function record_cgp_averages(N)
+    Ns = collect(3:N)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
@@ -99,6 +100,7 @@ function record_cgp_averages()
         end
         @show mean(iterations[:, i])
     end
+    print(iterations)
     CSV.write("cgp-iterations.csv", Tables.table(iterations .* 4), writeheader=false)
 end
 
@@ -158,4 +160,8 @@ function convergence_to_benchmark()
     scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=2, label=false)
     plot!(plt, minorgrid=false, minorticks=false, yscale=:log10)
     return plt
+end
+
+function runner(N)
+    
 end
