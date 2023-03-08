@@ -80,8 +80,8 @@ function record_averages(Ns)
     for i in eachindex(Ns)
         @show Ns[i]
         Threads.@threads for j in 1:32
-            print(j, " ")
             iterations[j, i] = random_graph_convergence_iterations(Ns[i])
+            println(j, " ")
         end
         println()
     end
@@ -97,8 +97,8 @@ function record_cgp_averages(Ns)
     for i in eachindex(Ns)
         @show Ns[i]
         Threads.@threads for j in 1:32
-            print(i, " ")
             iterations[j, i] = cgp_convergence_iterations(Ns[i])
+            println(j, " ")
         end
         println()
     end
@@ -215,6 +215,5 @@ function convergence_to_benchmark()
 end
 
 function runner(N)
-    record_averages(N)
     record_cgp_averages(N)
 end

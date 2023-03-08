@@ -63,10 +63,8 @@ function snr_incremental(f, g)
         sx, sy = f(), g()
         Ax, Qx = update_statistics(Ax, Qx, sx, k)
         Ay, Qy = update_statistics(Ay, Qy, sy, k)
-        print(k, "\r")
         k = k + 1
     end
-    print("   ", "\r")
     x̂ = Ax / sqrt(Qx / (k - 1))
     ŷ = Ay / sqrt(Qy / (k - 1))
     return max(x̂, ŷ), x̂ >= ŷ

@@ -31,29 +31,15 @@ function evolve_feedback(alg, G)
     return scores
 end
 
-function random_iterations(N)
-    i = 1
-    D = decoder(N)
-    n = 2 * (N - 1)^2 + (N - 1)
-     while Feedback.score(D(random_genome(N, n, 0, 1)), 512) < 2
-        i = i + 1
-    end
-    return i
-end
-
-function cgp_convergence_iterations(N)
-    i = 0
-    alg = build_feedback_experiment(components()[end-N+1:end], 4)
-    while score(alg.decode(alg.population[1,:]), 512) < 2
-        i = i + 1
-        evolve!(alg, 4)
-    end
-    return i
-end
-
 @time f1 = Feedback.ordinary_score(2048)
 @time f2 = Feedback.super_ordinary_score(2048)
 @time f3 = Feedback.benchmark_score(2048)
 @time f4 = Feedback.super_benchmark_score(2048)
+@show f1, f2, f3, f4
 
-alg = build_feedback_experiment(1)
+function runner(G)
+    alg = build_feedback_experiment(1)
+    scores = evolve_feedback(alg, G)
+    CSV.write("feedback-population.csv", Tables.table(alg.population), writeheader=false)
+    CSV.write("feedback-scores.csv", Tables.table(scores), writeheader=false)
+end
