@@ -9,6 +9,7 @@ using GraphRecipes
 using CSV
 using Tables
 using Distributions
+using LaTeXStrings
 
 function build_inverter_experiment(M, N)
     N = length(Inverter.components(N))
@@ -154,11 +155,33 @@ function convergence_to_benchmark()
     Plots.theme(:dao)
     x = repeat([3, 4, 5, 6], inner=63)
     plt = plot()
-    μs = mean(A', dims=2)
-    groupedboxplot!(plt, vcat(x, x), vcat(A[:], B[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random" "Algorithm"])
-    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=2, label=false)
-    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 4), B[:], color=:black, markersize=2, label=false)
-    plot!(plt, minorgrid=false, minorticks=false, yscale=:log10)
+    Aμs = mean(A', dims=2)
+    Bμs = mean(B', dims=2)
+    Aσs = std(A', dims=2)
+    Bσs = std(B', dims=2)
+    Aϵs = Aσs / √63
+    Bϵs = Bσs / √63
+
+    @show Aμs, Aσs, Aϵs
+    @show Bμs, Bσs, Bϵs
+    
+    groupedboxplot!(plt, vcat(x, x), vcat(A[:], B[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random search" "Algorithm search"])
+    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=1, label=false)
+    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 4), B[:], color=:black, markersize=1, label=false)
+    plot!(
+        plt,
+        minorgrid=false,
+        minorticks=false,
+        yscale=:log10,
+        legend=:best,
+        size=(350, 275),
+        tickfontsize=8,
+        legendfontsize=8,
+        guidefontsize=8,
+        xlabel=L"Graph size $|V|$",
+        ylabel="Function evaluations",
+    )
+    
     return plt
 end
 

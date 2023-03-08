@@ -10,12 +10,14 @@ using Plots
 using GraphRecipes
 using ClusterManagers
 
+
 include("problems.jl")
 export model_from_graph
 export problem_from_model
 export change_input_levels
 export sample_from_problem
 export snr_incremental
+
 
 include("algorithm.jl")
 export random_genome
@@ -24,6 +26,7 @@ export mutation_operator
 export decoder
 export Algorithm
 export evolve!
+
 
 include("Feedback.jl")
 include("Inverter.jl")
