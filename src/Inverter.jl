@@ -24,7 +24,9 @@ function components(N::Int=7)
     @named AmeR = SomeOperon()
     @named QacR = SomeOperon()
     @named BetI = SomeOperon()
-    return Tuple(vcat([pTac], [SrpR, PhiF, AmeR, QacR, BetI][1:N-2], [pYFP]))
+    @named AmtR = SomeOperon()
+    @named Lmra = SomeOperon()
+    return Tuple(vcat([pTac], [SrpR, PhiF, AmeR, QacR, BetI, AmtR, Lmra][1:N-2], [pYFP]))
 end
 
 function benchmark_graph(N::Int=7)

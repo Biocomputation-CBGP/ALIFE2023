@@ -69,7 +69,6 @@ end
 function average_random_graph_convergence(n, N)
     is = zeros(Int, n)
     Threads.@threads for i in eachindex(is)
-        @show i
         is[i] = random_graph_convergence_iterations(N)
     end
     return is
@@ -151,13 +150,16 @@ end
 
 function convergence_to_benchmark()
     ifn = "/home/lewis/sauces/julia/GeneticLogicGraph/src/iterations.csv"
+    cfn = "/home/lewis/sauces/julia/GeneticLogicGraph/src/cgp-iterations.csv"
     A = load_averages(ifn)
+    B = load_averages(cfn)
     Plots.theme(:dao)
     x = repeat([3, 4, 5, 6], inner=63)
     plt = plot()
     μs = mean(A', dims=2)
-    groupedboxplot!(plt, vcat(x, x), vcat(A[:], A[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random" "Algorithm"])
+    groupedboxplot!(plt, vcat(x, x), vcat(A[:], B[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random" "Algorithm"])
     scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=2, label=false)
+    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 4), B[:], color=:black, markersize=2, label=false)
     plot!(plt, minorgrid=false, minorticks=false, yscale=:log10)
     return plt
 end
