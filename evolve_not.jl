@@ -76,10 +76,10 @@ function average_random_graph_convergence(n, N)
 end
 
 function record_averages(Ns)
-    iterations = Matrix{Int}(undef, 64, length(Ns))
+    iterations = Matrix{Int}(undef, 32, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
-        Threads.@threads for j in 1:64
+        Threads.@threads for j in 1:32
             print(j, " ")
             iterations[j, i] = random_graph_convergence_iterations(Ns[i])
         end
@@ -93,10 +93,10 @@ function load_averages(fn)
 end
 
 function record_cgp_averages(Ns)
-    iterations = Matrix{Int}(undef, 64, length(Ns))
+    iterations = Matrix{Int}(undef, 32, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
-        Threads.@threads for j in 1:64
+        Threads.@threads for j in 1:32
             print(i, " ")
             iterations[j, i] = cgp_convergence_iterations(Ns[i])
         end
