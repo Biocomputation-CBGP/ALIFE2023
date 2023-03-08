@@ -77,7 +77,7 @@ end
 function record_averages(Ns)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
-        @show i
+        @show Ns[i]
         iterations[:, i] .= average_random_graph_convergence(64, Ns[i])
     end
     print(iterations)
