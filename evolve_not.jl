@@ -79,9 +79,12 @@ function record_averages(Ns)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
-        iterations[:, i] .= average_random_graph_convergence(64, Ns[i])
+        Threads.@threads for j in 1:64
+            print(j, " ")
+            iterations[j, i] = random_graph_convergence_iterations(Ns[i])
+        end
+        println()
     end
-    print(iterations)
     CSV.write("iterations.csv", Tables.table(iterations), writeheader=false)
 end
 
@@ -94,11 +97,11 @@ function record_cgp_averages(Ns)
     for i in eachindex(Ns)
         @show Ns[i]
         Threads.@threads for j in 1:64
+            print(i, " ")
             iterations[j, i] = cgp_convergence_iterations(Ns[i])
         end
-        @show mean(iterations[:, i])
+        println()
     end
-    print(iterations)
     CSV.write("cgp-iterations.csv", Tables.table(iterations .* 4), writeheader=false)
 end
 
@@ -153,7 +156,7 @@ function convergence_to_benchmark()
     A = load_averages(ifn)
     B = load_averages(cfn)
     Plots.theme(:dao)
-    x = repeat([3, 4, 5, 6], inner=63)
+    x = repeat([3, 4, 5, 6, 7], inner=63)
     plt = plot()
     Aμs = mean(A', dims=2)
     Bμs = mean(B', dims=2)
@@ -166,8 +169,8 @@ function convergence_to_benchmark()
     @show Bμs, Bσs, Bϵs
     
     groupedboxplot!(plt, vcat(x, x), vcat(A[:], B[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random search" "Algorithm search"])
-    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 4), A[:], color=:black, markersize=1, label=false)
-    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 4), B[:], color=:black, markersize=1, label=false)
+    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 5), A[:], color=:black, markersize=1.5, markeralpha=0.5, label=false)
+    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 5), B[:], color=:black, markersize=1.5, markeralpha=0.5, label=false)
     plot!(
         plt,
         minorgrid=false,
