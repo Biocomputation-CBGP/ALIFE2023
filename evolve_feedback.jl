@@ -10,13 +10,13 @@ using GraphRecipes
 function build_feedback_experiment(M)
     N = length(Feedback.components())
     n = 2 * ((N - 1)^2) + N - 1
-    MR = 3 / n
+    MR = 4 / n
     
     return Algorithm(
         random_population(M, N, n, 0, 1),
         fill(-Inf, M),
         mutation_operator(N, MR, 0, 1),
-        decoder(N),
+        decoder(N, 0, 1),
         Feedback.selector(),
     )
 end
