@@ -89,7 +89,7 @@ function record_averages(Ns)
 end
 
 function load_averages(fn)
-    CSV.File(fn) |> Tables.matrix
+    CSV.File(fn, header=false) |> Tables.matrix
 end
 
 function record_cgp_averages(Ns)
@@ -156,21 +156,47 @@ function convergence_to_benchmark()
     A = load_averages(ifn)
     B = load_averages(cfn)
     Plots.theme(:dao)
-    x = repeat([3, 4, 5, 6, 7], inner=63)
+    x = repeat([3, 4, 5, 6, 7], inner=64)
     plt = plot()
     Aμs = mean(A', dims=2)
     Bμs = mean(B', dims=2)
     Aσs = std(A', dims=2)
     Bσs = std(B', dims=2)
-    Aϵs = Aσs / √63
-    Bϵs = Bσs / √63
+    Aϵs = Aσs / √64
+    Bϵs = Bσs / √64
 
     @show Aμs, Aσs, Aϵs
     @show Bμs, Bσs, Bϵs
-    
-    groupedboxplot!(plt, vcat(x, x), vcat(A[:], B[:]), group=vcat(zeros(Int, length(A)), ones(Int, length(A))), markersize=3, markershape=:x, markerstrokewidth=0, outliers=false, labels=["Random search" "Algorithm search"])
-    scatter!(plt, x .- rand(Normal(0.25, 0.05), 63 * 5), A[:], color=:black, markersize=1.5, markeralpha=0.5, label=false)
-    scatter!(plt, x .+ rand(Normal(0.25, 0.05), 63 * 5), B[:], color=:black, markersize=1.5, markeralpha=0.5, label=false)
+
+    groupedboxplot!(
+        plt,
+        vcat(x, x),
+        vcat(A[:], B[:]),
+        group=vcat(zeros(Int, length(x)), ones(Int, length(x))),
+        markersize=3,
+        markershape=:x,
+        markerstrokewidth=0,
+        outliers=false,
+        labels=["Random search" "Algorithm search"]
+    )
+    scatter!(
+        plt,
+        x .- rand(Normal(0.25, 0.05), length(x)),
+        A[:],
+        color=:black,
+        markersize=1.5,
+        markeralpha=0.5,
+        label=false
+    )
+    scatter!(
+        plt,
+        x .+ rand(Normal(0.25, 0.05), length(x)),
+        B[:],
+        color=:black,
+        markersize=1.5,
+        markeralpha=0.5,
+        label=false
+    )
     plot!(
         plt,
         minorgrid=false,

@@ -44,13 +44,13 @@ end
 function evolve_and(alg, G)
     scores = Matrix{Float64}(undef, G, size(alg, 1))
     for g in 1:G
-        evolve!(alg, 4)
+        @time evolve!(alg, 4)
         scores[g, :] .= alg.scores
         @show g, scores[g, :]
-        if g % 4 == 1
+        if g % 8 == 1
             _, i = findmax(alg.scores)
             plt = plot_distributions(alg.decode(alg.population[i, :]))
-            savefig(plt, "/tmp/evolve-and-$g-dists.svg")
+            savefig(plt, "evolve-and-$g-dists.svg")
             display(plt)
         end
     end
@@ -58,12 +58,19 @@ function evolve_and(alg, G)
 end
 
 @show And.benchmark_score(256)
-a, b, c, d = And.distributions(And.benchmark_problem(), And.benchmark_model(), 256)
+# a, b, c, d = And.distributions(And.benchmark_problem(), And.benchmark_model(), 256)
 
-Plots.theme(:dao)
-plt = plot_distributions(And.benchmark_graph())
-display(plt)
+# Plots.theme(:dao)
+# plt = plot_distributions(And.benchmark_graph())
+# display(plt)
 
-alg = build_and_experiment(1)
+function runner(G)
+    alg = build_and_experiment(1)
+    scores = evolve_and(alg, G)
+    CSV.write("and-population.csv", Tables.table(alg.population), writeheader=false)
+    CSV.write("and-scores.csv", Tables.table(scores), writeheader=false)
+end
+
+
 
 
