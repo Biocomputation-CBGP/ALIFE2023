@@ -74,8 +74,7 @@ function average_random_graph_convergence(n, N)
     return is
 end
 
-function record_averages(N)
-    Ns = collect(3:N)
+function record_averages(Ns)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
         @show i
@@ -89,8 +88,7 @@ function load_averages(fn)
     CSV.File(fn) |> Tables.matrix
 end
 
-function record_cgp_averages(N)
-    Ns = collect(3:N)
+function record_cgp_averages(Ns)
     iterations = Matrix{Int}(undef, 64, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
