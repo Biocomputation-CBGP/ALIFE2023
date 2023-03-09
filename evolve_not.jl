@@ -10,6 +10,7 @@ using CSV
 using Tables
 using Distributions
 using LaTeXStrings
+using GeneticLogicGraph
 
 function build_inverter_experiment(M, N)
     N = length(Inverter.components(N))
@@ -30,20 +31,23 @@ function evolve_inverter(alg, G)
         evolve!(alg, 4)
         @show g, alg.scores
         scores[g, :] .= alg.scores
+        @named model = Circuit(alg.decode(alg.population[1,:]), Inverter.components())
+        problem = problem_from_model(model)
+        d = Inverter.complement(problem, model, 1024)
+        CSV.write("not-$g-complement.csv", Tables.table(d), writeheader=false)
     end
     return scores
 end
 
-# @time bscore = Inverter.benchmark_score(2048)
-# @show bscore
-# alg = build_inverter_experiment(1, 7)
+@time bscore = Inverter.benchmark_score(2048)
+@show bscore
+alg = build_inverter_experiment(1, 7)
 
 function cgp_convergence_iterations(N)
     i = 0
     alg = build_inverter_experiment(1, N)
     while true
-        i = i + 1
-        evolve!(alg, 4)
+        i = i + evolve!(alg, 4)
         g = alg.decode(alg.population[1, :])
         if g.ne > 0
             score, swap = alg.select(g, Inverter.benchmark_graph(N))
@@ -102,7 +106,7 @@ function record_cgp_averages(Ns)
         end
         println()
     end
-    CSV.write("cgp-iterations.csv", Tables.table(iterations .* 4), writeheader=false)
+    CSV.write("cgp-iterations.csv", Tables.table(iterations), writeheader=false)
 end
 
 function timecourse_of_benchmark()
@@ -156,7 +160,7 @@ function convergence_to_benchmark()
     A = load_averages(ifn)
     B = load_averages(cfn)
     Plots.theme(:dao)
-    x = repeat([3, 4, 5, 6, 7], inner=64)
+    x = repeat([3, 4, 5, 6, 7, 8], inner=64)
     plt = plot()
     Aμs = mean(A', dims=2)
     Bμs = mean(B', dims=2)
@@ -215,5 +219,6 @@ function convergence_to_benchmark()
 end
 
 function runner(N)
+    record_averages(N)
     record_cgp_averages(N)
 end

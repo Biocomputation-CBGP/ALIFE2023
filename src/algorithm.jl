@@ -123,6 +123,7 @@ function evolve!(x::Algorithm, λ::Int, i::Int)
     mutant_genomes = [x.mutate(x[i, :]) for _ in 1:λ]
 
     k = 0
+    evals = 0
     
     for j in 1:λ
         mutant_thing = x.decode(mutant_genomes[j])
@@ -130,6 +131,7 @@ function evolve!(x::Algorithm, λ::Int, i::Int)
             k = j
         elseif mutant_thing.ne > 0
             score, swap = x.select(mutant_thing, best_thing)
+            evals = evals + 1
             if swap
                 x.scores[i] = score
                 best_thing = mutant_thing
@@ -142,17 +144,21 @@ function evolve!(x::Algorithm, λ::Int, i::Int)
         x.population[i, :] .= mutant_genomes[k]
     end
     
-    return nothing
+    return evals
 end
 
 function evolve!(x::Algorithm, λ::Int)
-    Threads.@threads for i in 1:size(x, 1)
-        evolve!(x, λ, i)
+    evals = 0
+    for i in 1:size(x, 1)
+        evals = evals + evolve!(x, λ, i)
     end
+    
     _, i = findmax(x.scores)
     _, j = findmin(x.scores)
     if rand() < 0.5
         x.population[j, :] .= x.population[i, :]
         x.scores[j] = x.scores[i]
     end
+    
+    return evals
 end

@@ -50,10 +50,10 @@ function complement(problem, model, N)
     output = (@nonamespace model.YFP).monomer
 
     problem = change_input_levels(problem, [input], [10 * log(2) / 90])
-    los = sample_from_problem(problem, model, output, N)
+    los = sample_from_problem(problem, model, output, N).u
     
     problem = change_input_levels(problem, [input], [100 * log(2) / 90])
-    his = sample_from_problem(problem, model, output, N)
+    his = sample_from_problem(problem, model, output, N).u
     
     return los .- his
 end
