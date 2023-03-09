@@ -79,34 +79,30 @@ function average_random_graph_convergence(n, N)
     return is
 end
 
-function record_averages(Ns)
-    iterations = Matrix{Int}(undef, 32, length(Ns))
+function record_averages(n, Ns, fn)
+    iterations = Matrix{Int}(undef, n, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
-        Threads.@threads for j in 1:32
+        Threads.@threads for j in 1:n
             iterations[j, i] = random_graph_convergence_iterations(Ns[i])
-            println(j, " ")
         end
-        println()
     end
-    CSV.write("iterations.csv", Tables.table(iterations), writeheader=false)
+    CSV.write("iterations-$(fn).csv", Tables.table(iterations), writeheader=false)
 end
 
 function load_averages(fn)
     CSV.File(fn, header=false) |> Tables.matrix
 end
 
-function record_cgp_averages(Ns)
-    iterations = Matrix{Int}(undef, 32, length(Ns))
+function record_cgp_averages(n, Ns, fn)
+    iterations = Matrix{Int}(undef, n, length(Ns))
     for i in eachindex(Ns)
         @show Ns[i]
-        Threads.@threads for j in 1:32
+        Threads.@threads for j in 1:n
             iterations[j, i] = cgp_convergence_iterations(Ns[i])
-            println(j, " ")
         end
-        println()
     end
-    CSV.write("cgp-iterations.csv", Tables.table(iterations), writeheader=false)
+    CSV.write("cgp-iterations-$(fn).csv", Tables.table(iterations), writeheader=false)
 end
 
 function timecourse_of_benchmark()
@@ -218,7 +214,7 @@ function convergence_to_benchmark()
     return plt
 end
 
-function runner(N)
-    record_averages(N)
-    record_cgp_averages(N)
+function runner(N, fn)
+    record_averages(8, N, fn)
+    record_cgp_averages(8, N, fn)
 end
